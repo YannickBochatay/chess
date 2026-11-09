@@ -2,8 +2,7 @@ import Chessboard from "chessboard"
 
 const board = Chessboard("board", {
   draggable:true,
-  dropOffBoard:"trash",
-  sparePieces:true
+  dropOffBoard:"trash"
 })
 
-setTimeout(board.start, 2000);
+board.start();
