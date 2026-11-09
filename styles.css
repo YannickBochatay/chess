@@ -14,6 +14,8 @@ body {
   main {
     flex:1;
     margin:auto;
+    display:flex;
+    align-items: center;
   }
 
   footer {
@@ -21,6 +23,14 @@ body {
   }
 }
 
-#board {
-  width:40vw;
+@media (orientation: landscape) {
+  #board {
+    width:calc(100vh - 50px);
+  }
+}
+
+@media (orientation: portrait) {
+  #board {
+    width:calc(100vw - 20px);
+  }
 }
