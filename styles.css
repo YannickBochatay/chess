@@ -1,0 +1,26 @@
+body {
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+  margin:0;
+  font-family:sans-serif;
+
+  header {
+    h1 {
+      text-align:center;
+    }
+  }
+
+  main {
+    flex:1;
+    margin:auto;
+  }
+
+  footer {
+    text-align: center;
+  }
+}
+
+#board {
+  width:40vw;
+}
