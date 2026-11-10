@@ -1,10 +1,23 @@
 export class Stockfish {
 
   #queue = [];
+  #elo = 1500;
 
   constructor(worker) {
     this.worker = worker;
     this.worker.onmessage = e => this.#dispatch(e.data);
+  }
+
+  set elo(value) {
+    if (typeof value !== "number") throw new TypeError("ELO value must be a number");
+    if (value < 1320) throw new RangeError("ELO value must be greater or equal than 1320");
+    if (value > 3190) throw new RangeError("ELO value must be lower or equal than 3190");
+
+    this.#elo = value;
+  }
+
+  get elo() {
+    return this.#elo;
   }
 
   send(line) {
@@ -55,7 +68,7 @@ export class Stockfish {
     // Exemple d’options (décommenter selon le besoin)
     // this.send('setoption name Skill Level value 10');   // 0‑20, 0 = très faible
     // this.send('setoption name UCI_LimitStrength value true');
-    // this.send('setoption name UCI_Elo value 1500');
+    this.send(`setoption name UCI_Elo value ${this.#elo}`);
 
     this.send('isready');
     await this.waitFor('readyok');
@@ -80,7 +93,3 @@ export class Stockfish {
 }
 
 export const stockfish = new Stockfish(new Worker('lib/stockfish/stockfish-19-lite-single.js'));
-
-await stockfish.init();
-
-console.log("Stockfish est prêt");

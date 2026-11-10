@@ -30,6 +30,41 @@
         <div id="stockfish-eval"></div>
       </section>
     </main>
+    <dialog id="newgame-config">
+      <article>
+        <header>
+          <h3>Nouvelle partie</h3>
+        </header>
+        <form>
+          
+          <label>
+            <input type="radio" name="nb-players" checked value="1">
+            1 joueur
+          </label>
+          <label>
+            <input type="radio" name="nb-players" value="2">
+            2 joueurs
+          </label>
+          <div id="elo-choice">
+            <label for="elo">
+              Niveau de l'ordinateur :
+            </label>
+            <div id="elo-range">
+              <span>1320</span>
+              <input type="range" name="elo" min="1320" max="3190" step="10" id="elo" value="1500"/>
+              <span>3190</span>
+            </div>
+            <div id="elo-value">
+              1500 ELO
+            </div>
+          </div>
+          <footer>
+            <input type="reset" value="Annuler" class="outline"/>
+            <input type="submit" value="Commencer"/>
+          </footer>
+        </form>
+      </article>
+    </dialog>
     <footer>
       Fait avec amour par Yannick. Pièces par <a href="//commons.wikimedia.org/wiki/User:Cburnett" title="User:Cburnett">Cburnett</a>.
     </footer>
