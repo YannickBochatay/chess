@@ -1,25 +1,23 @@
 import Chessboard from "chessboard";
-import { Chess } from "chess.js";
+import { game } from "./game.js";
 import $ from "jquery";
-import confetti from "confetti";
-
-const game = new Chess();
+import { throwConfetti } from "./confetti.js";
 
 const whiteSquareGrey = '#a9a9a9'
 const blackSquareGrey = '#696969'
 
-function removeGreySquares () {
+function removeGreySquares() {
   $('#board .square-55d63').css('background', '')
 }
 
-function greySquare (square) {
+function greySquare(square) {
   const $square = $('#board .square-' + square)
   const background = $square.hasClass('black-3c85d') ? blackSquareGrey : whiteSquareGrey
 
   $square.css('background', background)
 }
 
-function onDragStart (source, piece) {
+function onDragStart(source, piece) {
   // do not pick up pieces if the game is over
   if (game.isGameOver()) return false
 
@@ -30,7 +28,7 @@ function onDragStart (source, piece) {
   }
 }
 
-function onDrop (source, target) {
+function onDrop(source, target) {
   removeGreySquares()
 
   try {
@@ -45,7 +43,7 @@ function onDrop (source, target) {
   }
 }
 
-function onMouseoverSquare (square, piece) {
+function onMouseoverSquare(square, piece) {
   // get list of possible moves for this square
   const moves = game.moves({
     square: square,
@@ -60,11 +58,11 @@ function onMouseoverSquare (square, piece) {
   for (const move of moves) greySquare(move.to);
 }
 
-function onMouseoutSquare (square, piece) {
+function onMouseoutSquare(square, piece) {
   removeGreySquares()
 }
 
-function onSnapEnd () {
+function onSnapEnd() {
   board.position(game.fen())
 }
 
@@ -78,42 +76,4 @@ const config = {
   onSnapEnd: onSnapEnd
 }
 
-const board = Chessboard("board", config);
-
-document.querySelector("#flip").addEventListener("click", board.flip);
-document.querySelector("#newgame").addEventListener("click", () => {
-  if (game.history().length && confirm("Etes-vous sûr de vouloir abandonner la partie en cours ?")) {
-    game.reset();
-    board.start();
-  }
-});
-
-function randomPos() {
-  return {
-    x : Math.round(innerWidth * Math.random()),
-    y : Math.round(innerHeight * Math.random())
-  }
-}
-
-function throwConfetti(count=4) {
-  
-  const confettiConfig = {
-    count: 100,
-    size: 2,
-    velocity: 200,
-    fade: false
-  };
-
-  let cpt = 1;
-
-  const id = setInterval(() => {
-    confetti({
-      position : randomPos(),
-      ...confettiConfig
-    });
-    cpt++;
-    if (cpt >= count) clearInterval(id);
-  }, 1000);
-
-  confetti(confettiConfig);
-}
+export const board = Chessboard("board", config);
