@@ -46,7 +46,7 @@ function onDrop(source, target) {
     else setTimeout(playEngineMove, 1000);
 
   } catch(e) {
-    console.error(e);
+    console.log(e);
     return "snapback";
   }
 }
