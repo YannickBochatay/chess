@@ -1,6 +1,7 @@
 import Chessboard from "chessboard";
 import { Chess } from "chess.js";
 import $ from "jquery";
+import confetti from "confetti";
 
 const game = new Chess();
 
@@ -38,6 +39,7 @@ function onDrop (source, target) {
       to: target,
       promotion: 'q' // NOTE: always promote to a queen for example simplicity
     })
+    if (game.isGameOver()) throwConfetti()
   } catch(e) {
     return "snapback"
   }
@@ -78,4 +80,32 @@ const config = {
 
 const board = Chessboard("board", config);
 
+function randomPos() {
+  return {
+    x : Math.round(innerWidth * Math.random()),
+    y : Math.round(innerHeight * Math.random())
+  }
+}
 
+function throwConfetti(count=4) {
+  
+  const confettiConfig = {
+    count: 100,
+    size: 2,
+    velocity: 200,
+    fade: false
+  };
+
+  let cpt = 1;
+
+  const id = setInterval(() => {
+    confetti({
+      position : randomPos(),
+      ...confettiConfig
+    });
+    cpt++;
+    if (cpt >= count) clearInterval(id);
+  }, 1000);
+
+  confetti(confettiConfig);
+}
