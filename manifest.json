@@ -1,0 +1,14 @@
+{
+  "name": "Jeu d'échecs hors-ligne",
+  "short_name": "Echecs",
+  "description": "Jeu d'échecs hors-ligne à 1 ou 2 joueurs",
+  "start_url": "/index.html",
+  "scope" : "/",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "icons": [{
+      "src": "lib/chessboard/img/bK.svg",
+      "sizes": "any"
+    }]
+}
