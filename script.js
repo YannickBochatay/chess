@@ -80,6 +80,14 @@ const config = {
 
 const board = Chessboard("board", config);
 
+document.querySelector("#flip").addEventListener("click", board.flip);
+document.querySelector("#newgame").addEventListener("click", () => {
+  if (game.history().length && confirm("Etes-vous sûr de vouloir abandonner la partie en cours ?")) {
+    game.reset();
+    board.start();
+  }
+});
+
 function randomPos() {
   return {
     x : Math.round(innerWidth * Math.random()),
