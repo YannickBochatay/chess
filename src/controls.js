@@ -69,3 +69,7 @@ form.addEventListener("reset", e => {
 });
 
 showModal();
+
+window.addEventListener("beforeunload", e => {
+  if (game.history().length) e.preventDefault();
+})
