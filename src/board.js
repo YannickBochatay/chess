@@ -3,6 +3,7 @@ import { game } from "./game.js";
 import $ from "jquery";
 import { throwConfetti } from "./confetti.js";
 import { stockfish } from "./stockfish.js";
+import { config } from "./config.js";
 
 export const movesUci = [];
 
@@ -43,7 +44,7 @@ function onDrop(source, target) {
     movesUci.push(move.lan);
     
     if (game.isGameOver()) throwConfetti();
-    else setTimeout(playEngineMove, 1000);
+    else if (config.nbPlayers === 1) setTimeout(playEngineMove, 1000);
 
   } catch(e) {
     console.log(e);
@@ -87,7 +88,7 @@ function onSnapEnd() {
   board.position(game.fen())
 }
 
-const config = {
+const boardConfig = {
   draggable: true,
   position: 'start',
   onDragStart: onDragStart,
@@ -97,4 +98,4 @@ const config = {
   onSnapEnd: onSnapEnd
 }
 
-export const board = Chessboard("board", config);
+export const board = Chessboard("board", boardConfig);

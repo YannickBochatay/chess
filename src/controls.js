@@ -1,6 +1,7 @@
 import { board, movesUci } from "./board.js"
 import { game } from "./game.js"
 import { stockfish } from "./stockfish.js";
+import { config } from "./config.js"
 
 document.querySelector("#flip").addEventListener("click", board.flip);
 
@@ -19,13 +20,21 @@ const eloValue = form.querySelector("#elo-value");
 const eloInput = form.querySelector("#elo");
 
 eloInput.addEventListener("input", e => eloValue.textContent = e.target.value + " ELO");
+eloInput.value = config.elo;
+eloInput.dispatchEvent(new Event("input"));
 
 const eloChoice = form.querySelector("#elo-choice");
 
 form.addEventListener("change", e => {
   const data = new FormData(form);
-  eloChoice.hidden = (data.get("nb-players") === "2");
+  eloChoice.hidden = (data.get("nbPlayers") === "2");
+  config.nbPlayers = Number(data.get("nbPlayers"));
+  config.elo = Number(data.get("elo"));
 });
+
+const radioInput = form.querySelector(`input[name=nbPlayers][value="${config.nbPlayers}"]`);
+radioInput.checked = true;
+form.dispatchEvent(new Event("change"));
 
 form.addEventListener("submit", e => {
   e.preventDefault();
@@ -38,16 +47,12 @@ form.addEventListener("submit", e => {
 
   const data = new FormData(form);
 
-  console.log(data.get("elo"));
-
   stockfish.elo = Number(data.get("elo"));
 
   stockfish.init();
 
   newGameModal.close();
 });
-
-form.reset();
 
 form.addEventListener("reset", e => {
   e.preventDefault();
