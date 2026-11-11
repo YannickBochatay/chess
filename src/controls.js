@@ -1,4 +1,4 @@
-import { board, movesUci } from "./board.js"
+import { board, movesUci, playEngineMove } from "./board.js"
 import { game } from "./game.js"
 import { stockfish } from "./stockfish.js";
 import { config } from "./config.js"
@@ -21,22 +21,26 @@ const eloInput = form.querySelector("#elo");
 
 eloInput.addEventListener("input", e => eloValue.textContent = e.target.value + " ELO");
 eloInput.value = config.elo;
-eloInput.dispatchEvent(new Event("input"));
 
-const eloChoice = form.querySelector("#elo-choice");
-
-form.addEventListener("change", e => {
-  const data = new FormData(form);
-  eloChoice.hidden = (data.get("nbPlayers") === "2");
-  config.nbPlayers = Number(data.get("nbPlayers"));
-  config.elo = Number(data.get("elo"));
-});
+const onePlayerChoices = form.querySelector("#onePlayerChoices");
 
 const radioInput = form.querySelector(`input[name=nbPlayers][value="${config.nbPlayers}"]`);
 radioInput.checked = true;
+
+const colorInput = form.querySelector(`input[name=color][value="${config.color}"]`);
+colorInput.checked = true;
+
+form.addEventListener("change", e => {
+  const data = new FormData(form);
+  onePlayerChoices.hidden = (data.get("nbPlayers") === "2");
+  config.nbPlayers = Number(data.get("nbPlayers"));
+  config.elo = Number(data.get("elo"));
+  config.color = data.get("color");
+});
+
 form.dispatchEvent(new Event("change"));
 
-form.addEventListener("submit", e => {
+form.addEventListener("submit", async e => {
   e.preventDefault();
 
   if (game.history().length) {
@@ -48,10 +52,15 @@ form.addEventListener("submit", e => {
   const data = new FormData(form);
 
   stockfish.elo = Number(data.get("elo"));
-
-  stockfish.init();
-
+  
   newGameModal.close();
+
+  await stockfish.init();
+
+  board.orientation(data.get("color"));
+  if (data.get("color") === "black") {
+    await playEngineMove();
+  }
 });
 
 form.addEventListener("reset", e => {

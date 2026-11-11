@@ -52,7 +52,7 @@ function onDrop(source, target) {
   }
 }
 
-async function playEngineMove() {
+export async function playEngineMove() {
   stockfish.setPosition(movesUci);
 
   const bestUci = await stockfish.go({depth: 12});

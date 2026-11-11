@@ -33,7 +33,7 @@ body {
 
   #newgame-config {
 
-    #elo-choice {
+    #onePlayerChoices {
       margin:20px 0;
       #elo-range {
         display:flex;

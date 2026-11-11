@@ -36,27 +36,42 @@
           <h3>Nouvelle partie</h3>
         </header>
         <form>
-          
-          <label>
-            <input type="radio" name="nbPlayers" checked value="1">
-            1 joueur
-          </label>
-          <label>
-            <input type="radio" name="nbPlayers" value="2">
-            2 joueurs
-          </label>
-          <div id="elo-choice">
-            <label for="elo">
-              Niveau de l'ordinateur :
+          <fieldset>
+            <legend>Nombre de joueurs</legend>
+            <label>
+              <input type="radio" name="nbPlayers" checked value="1">
+              1 joueur
             </label>
-            <div id="elo-range">
-              <span>1320</span>
-              <input type="range" name="elo" min="1320" max="3190" step="10" id="elo" value="1500"/>
-              <span>3190</span>
-            </div>
-            <div id="elo-value">
-              1500 ELO
-            </div>
+            <label>
+              <input type="radio" name="nbPlayers" value="2">
+              2 joueurs
+            </label>
+          </fieldset>
+          <div id="onePlayerChoices">
+            <fieldset>
+              <legend>Couleur</legend>
+              <label>
+              <input type="radio" name="color" checked value="white">
+                blancs
+              </label>
+              <label>
+                <input type="radio" name="color" value="black">
+                noirs
+              </label>
+            </fieldset>
+            <fieldset>
+              <label for="elo">
+                Niveau de l'ordinateur
+              </label>
+              <div id="elo-range">
+                <span>1320</span>
+                <input type="range" name="elo" min="1320" max="3190" step="10" id="elo" value="1500"/>
+                <span>3190</span>
+              </div>
+              <div id="elo-value">
+                1500 ELO
+              </div>
+            </fieldset>
           </div>
           <footer>
             <input type="reset" value="Annuler" class="outline"/>
