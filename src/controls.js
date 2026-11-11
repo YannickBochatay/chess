@@ -57,10 +57,12 @@ form.addEventListener("submit", async e => {
 
   await stockfish.init();
 
-  board.orientation(data.get("color"));
-  if (data.get("color") === "black") {
-    await playEngineMove();
-  }
+  let color = data.get("color");
+
+  if (color === "random") color = Math.random() > 0.5 ? "black" : "white";
+
+  board.orientation(color);
+  if (color === "black") await playEngineMove();
 });
 
 form.addEventListener("reset", e => {
