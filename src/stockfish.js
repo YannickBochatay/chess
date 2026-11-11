@@ -21,6 +21,7 @@ export class Stockfish {
   }
 
   send(line) {
+    console.log("%cstdin", "color: blue", line);
     this.worker.postMessage(line);
   }
 
@@ -41,7 +42,7 @@ export class Stockfish {
 
   /* Découpage et distribution des lignes reçues */
   #dispatch(line) {
-    console.log(line);
+    console.log("%cstdout", "color: orange", line);
     
     const trimmed = line.trim();
     // Recherche du premier listener dont le préfixe correspond
