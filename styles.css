@@ -35,6 +35,11 @@ body {
 
     #onePlayerChoices {
       margin:20px 0;
+
+      label[for="elo"] {
+        font-weight:bold;
+      }
+
       #elo-range {
         display:flex;
         span {
