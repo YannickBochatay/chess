@@ -1,0 +1,4 @@
+import "./ColorChoice.js"
+import "./LevelChoice.js"
+import "./NbPlayerChoice.js"
+import "./Form.js"

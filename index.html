@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Echecs</title>
     <link rel="icon" href="lib/chessboard/img/bK.svg">
-    <link rel="stylesheet" href="lib/sumi.css/index.css">
+    <link rel="stylesheet" href="lib/sumi.css/index.css" id="defaultStyleSheet">
     <link rel="stylesheet" href="lib/chessboard/styles.css">
     <link rel="stylesheet" href="styles.css">
     <script type="importmap">
@@ -18,6 +18,7 @@
         }
       }
     </script>
+    <script src="src/components/index.js" type="module"></script>
     <script src="src/index.js" type="module"></script>
   </head>
   <body>
@@ -31,58 +32,7 @@
       </section>
     </main>
     <dialog id="newgame-config">
-      <article>
-        <header>
-          <h3>Nouvelle partie</h3>
-        </header>
-        <form>
-          <fieldset>
-            <legend>Nombre de joueurs</legend>
-            <label>
-              <input type="radio" name="nbPlayers" checked value="1">
-              1 joueur
-            </label>
-            <label>
-              <input type="radio" name="nbPlayers" value="2">
-              2 joueurs
-            </label>
-          </fieldset>
-          <div id="onePlayerChoices">
-            <fieldset>
-              <legend>Couleur</legend>
-              <label>
-              <input type="radio" name="color" checked value="white">
-                blancs
-              </label>
-              <label>
-                <input type="radio" name="color" value="black">
-                noirs
-              </label>
-              <label>
-                <input type="radio" name="color" value="random">
-                aléatoire
-              </label>
-            </fieldset>
-            <fieldset>
-              <label for="elo">
-                Niveau de l'ordinateur
-              </label>
-              <div id="elo-range">
-                <span>1320</span>
-                <input type="range" name="elo" min="1320" max="3190" step="10" id="elo" value="1500"/>
-                <span>3190</span>
-              </div>
-              <div id="elo-value">
-                1500 ELO
-              </div>
-            </fieldset>
-          </div>
-          <footer>
-            <input type="reset" value="Annuler" class="outline"/>
-            <input type="submit" value="Commencer"/>
-          </footer>
-        </form>
-      </article>
+      <chess-form-choice></chess-form-choice>
     </dialog>
     <footer>
       Fait avec amour par Yannick. Pièces par <a href="//commons.wikimedia.org/wiki/User:Cburnett" title="User:Cburnett">Cburnett</a>.
