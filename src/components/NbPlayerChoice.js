@@ -1,10 +1,14 @@
-import { config, onStateChange, offStateChange } from "../config.js"
+import { state, onStateChange, offStateChange } from "../state.js"
 
 const template = document.createElement("template")
 
 template.innerHTML = `
   <fieldset>
     <legend>Nombre de joueurs</legend>
+    <label>
+      <input type="radio" name="nbPlayers" checked value="0">
+      0 joueur
+    </label>
     <label>
       <input type="radio" name="nbPlayers" checked value="1">
       1 joueur
@@ -24,12 +28,12 @@ class NbPlayerChoice extends HTMLElement {
   }
 
   #update = () => {
-    const input = this.querySelector(`input[value="${config.nbPlayers}"]`);
+    const input = this.querySelector(`input[value="${state.nbPlayers}"]`);
     if (!input.checked) input.checked = true;
   }
 
   #handleChange(e) {
-    if (e.target.checked) config.nbPlayers = Number(e.target.value)
+    if (e.target.checked) state.nbPlayers = Number(e.target.value)
   }
 
   connectedCallback() {

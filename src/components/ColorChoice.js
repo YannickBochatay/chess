@@ -1,4 +1,4 @@
-import { config, onStateChange, offStateChange } from "../config.js"
+import { state, onStateChange, offStateChange } from "../state.js"
 
 const template = document.createElement("template")
 
@@ -28,12 +28,12 @@ class ColorChoice extends HTMLElement {
   }
 
   #update = () => {
-    const input = this.querySelector(`input[value="${config.color}"]`);
+    const input = this.querySelector(`input[value="${state.color}"]`);
     if (!input.checked) input.checked = true;
   }
 
   #handleChange(e) {
-    if (e.target.checked) config.color = e.target.value
+    if (e.target.checked) state.color = e.target.value
   }
 
   connectedCallback() {

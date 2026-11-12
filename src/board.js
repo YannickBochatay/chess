@@ -3,9 +3,7 @@ import { game } from "./game.js";
 import $ from "jquery";
 import { throwConfetti } from "./confetti.js";
 import { stockfish } from "./stockfish.js";
-import { config } from "./config.js";
-
-export const movesUci = [];
+import { state } from "./state.js";
 
 const whiteSquareGrey = '#a9a9a9';
 const blackSquareGrey = '#696969';
@@ -41,10 +39,10 @@ function onDrop(source, target) {
       to: target,
       promotion: 'q' // NOTE: always promote to a queen for example simplicity
     });
-    movesUci.push(move.lan);
+    state.movesUci = state.movesUci.concat(move.lan);
     
     if (game.isGameOver()) throwConfetti();
-    else if (config.nbPlayers === 1) setTimeout(playEngineMove, 1000);
+    else if (state.nbPlayers === 1) setTimeout(playEngineMove, 1000);
 
   } catch(e) {
     console.log(e);
@@ -53,7 +51,7 @@ function onDrop(source, target) {
 }
 
 export async function playEngineMove() {
-  stockfish.setPosition(movesUci);
+  stockfish.setPosition(state.movesUci);
 
   const bestUci = await stockfish.go({depth: 12});
   const engineMove = game.move(bestUci, { sloppy: true });
@@ -61,7 +59,7 @@ export async function playEngineMove() {
     console.error('Mauvais coup renvoyé par Stockfish :', bestUci);
     return;
   }
-  movesUci.push(bestUci);
+  state.movesUci = state.movesUci.concat(bestUci);
   board.position(game.fen());
 }
 

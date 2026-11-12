@@ -1,16 +1,12 @@
-import { config, onStateChange, offStateChange } from "../config.js";
+import { state, onStateChange, offStateChange } from "../state.js";
 import { game } from "../game.js";
-import { board, playEngineMove, movesUci } from "../board.js";
+import { board, playEngineMove } from "../board.js";
 import { stockfish } from "../stockfish.js";
+import { throwConfetti } from "../confetti.js";
 
 const template = document.createElement("template")
 
 template.innerHTML = `
-  <style>
-    #onePlayerChoices {
-      margin:20px 0;
-    }
-  </style>
   <form>
     <article>
       <header>
@@ -18,10 +14,8 @@ template.innerHTML = `
       </header>
       <main>
         <chess-nb-players-choice></chess-nb-players-choice>
-        <div id="onePlayerChoices">
-          <chess-color-choice></chess-color-choice>
-          <chess-level-choice></chess-level-choice>
-        </div>
+        <chess-color-choice></chess-color-choice>
+        <chess-level-choice></chess-level-choice>
       </main>
       <footer>
         <input type="reset" value="Annuler" class="outline" hidden/>
@@ -44,23 +38,29 @@ class FormChoice extends HTMLElement {
     if (game.history().length) {
       game.reset();
       board.start();
-      while (movesUci.length) movesUci.pop();
+      state.movesUci = [];
     }
   
-    stockfish.elo = config.elo;
+    stockfish.elo = state.elo;
     await stockfish.init();
 
-    if (config.nbPlayers === 1) {
+    if (state.nbPlayers === 1) {
         
-      let color = config.color;
+      let color = state.color;
     
       if (color === "random") color = Math.random() > 0.5 ? "black" : "white";
     
       board.orientation(color);
       if (color === "black") await playEngineMove();
 
-    } else if (config.nbPlayers === 0) {
-
+    } else if (state.nbPlayers === 0) {
+      await (async function autoPlay() {
+        if (game.isGameOver()) throwConfetti()
+        else {
+          await playEngineMove();
+          setTimeout(autoPlay, 1000);
+        }
+      })()
     }
   }
 
@@ -69,7 +69,8 @@ class FormChoice extends HTMLElement {
   }
 
   #handlePlayerChange = () => {
-    this.querySelector("#onePlayerChoices").hidden = config.nbPlayers !== 1
+    this.querySelector("chess-color-choice").hidden = state.nbPlayers !== 1
+    this.querySelector("chess-level-choice").hidden = state.nbPlayers === 2
   }
 
   connectedCallback() {

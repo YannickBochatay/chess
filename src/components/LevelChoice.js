@@ -1,4 +1,4 @@
-import { config, onStateChange, offStateChange } from "../config.js"
+import { state, onStateChange, offStateChange } from "../state.js"
 
 const template = document.createElement("template")
 
@@ -43,13 +43,13 @@ class LevelChoice extends HTMLElement {
   }
 
   #update = () => {
-    this.#input.value = config.elo;
-    this.querySelector("#value").textContent = config.elo + " ELO";
+    this.#input.value = state.elo;
+    this.querySelector("#value").textContent = state.elo + " ELO";
   }
 
   connectedCallback() {
     this.#update();
-    this.#input.addEventListener("input", e => { config.elo = Number(e.target.value) });
+    this.#input.addEventListener("input", e => { state.elo = Number(e.target.value) });
     onStateChange("elo", this.#update);
   }
 
