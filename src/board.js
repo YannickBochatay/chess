@@ -56,7 +56,7 @@ export async function playEngineMove() {
   const bestUci = await stockfish.go({depth: 12});
   const engineMove = game.move(bestUci, { sloppy: true });
   if (!engineMove) {
-    console.error('Mauvais coup renvoyé par Stockfish :', bestUci);
+    console.error('Mauvais coup renvoyé par Stockfish :', bestUci);
     return;
   }
   state.movesUci = state.movesUci.concat(bestUci);

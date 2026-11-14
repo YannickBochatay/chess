@@ -73,16 +73,22 @@ class FormChoice extends HTMLElement {
     this.querySelector("chess-level-choice").hidden = state.nbPlayers === 2
   }
 
+  #handleMovePiece = () => {
+    this.querySelector("input[type=reset]").hidden = !game.history().length;
+  }
+
   connectedCallback() {
     const form = this.querySelector("form");
     form.addEventListener("submit", this.#handleSubmit);
     form.addEventListener("reset", this.#handleReset);
 
     onStateChange("nbPlayers", this.#handlePlayerChange);
+    onStateChange("movesUci", this.#handleMovePiece);
   }
 
   disconnectedCallback() {
     offStateChange("nbPlayers", this.#handlePlayerChange);
+    offStateChange("movesUci", this.#handleMovePiece);
   }
 
 }
