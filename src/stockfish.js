@@ -93,4 +93,3 @@ export class Stockfish {
   }
 }
 
-export const stockfish = new Stockfish(new Worker('lib/stockfish/stockfish-19-lite-single.js'));

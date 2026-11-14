@@ -19,20 +19,25 @@
       }
     </script>
     <script src="src/components/index.js" type="module"></script>
-    <script src="src/index.js" type="module"></script>
   </head>
   <body>
     <main>
-      <div id="board"></div>
+      <chess-board></chess-board>
       <section id="controls">
-        <chess-new-game></chess-new-game>
-        <br>
-        <button id="flip" class="outline">Retourner l'échiquier</button>
-        <div id="stockfish-eval"></div>
+        <div>
+          <chess-new-game></chess-new-game>
+        </div>
+        <div>
+          <chess-flip-board></chess-flip-board>
+        </div>
       </section>
     </main>
     <footer>
-      Fait avec amour par Yannick. Pièces par <a href="//commons.wikimedia.org/wiki/User:Cburnett" title="User:Cburnett">Cburnett</a>.
+      Fait avec amour par Yannick.
+      Pièces par
+      <a href="//commons.wikimedia.org/wiki/User:Cburnett" title="User:Cburnett">
+        Cburnett
+      </a>.
     </footer>
   </body>
 </html>

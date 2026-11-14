@@ -49,7 +49,7 @@ class LevelChoice extends HTMLElement {
 
   connectedCallback() {
     this.#update();
-    this.#input.addEventListener("input", e => { state.elo = Number(e.target.value) });
+    this.#input.addEventListener("input", e => state.elo = Number(e.target.value));
     onStateChange("elo", this.#update);
   }
 

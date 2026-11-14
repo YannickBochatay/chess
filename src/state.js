@@ -1,4 +1,4 @@
-import { createState } from "./utils.js"
+import { createState } from "./utils/createState.js"
 
 export const { state, onStateChange, offStateChange } = createState({
   nbPlayers : 1,

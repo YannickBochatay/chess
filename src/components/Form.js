@@ -1,8 +1,4 @@
 import { state, onStateChange, offStateChange } from "../state.js";
-import { game } from "../game.js";
-import { board, playEngineMove } from "../board.js";
-import { stockfish } from "../stockfish.js";
-import { throwConfetti } from "../confetti.js";
 
 const template = document.createElement("template")
 
@@ -32,36 +28,16 @@ class FormChoice extends HTMLElement {
     this.append(template.content.cloneNode(true));
   }
 
-  async #handleSubmit(e) {
+  #handleSubmit(e) {
     e.preventDefault();
-  
-    if (game.history().length) {
-      game.reset();
-      board.start();
-      state.movesUci = [];
-    }
-  
-    stockfish.elo = state.elo;
-    await stockfish.init();
 
-    if (state.nbPlayers === 1) {
-        
-      let color = state.color;
+    const board = document.querySelector("chess-board");
     
-      if (color === "random") color = Math.random() > 0.5 ? "black" : "white";
-    
-      board.orientation(color);
-      if (color === "black") await playEngineMove();
+    board.elo = state.elo;
+    board.nbPlayers = state.nbPlayers;
+    board.color = state.color;
 
-    } else if (state.nbPlayers === 0) {
-      await (async function autoPlay() {
-        if (game.isGameOver()) throwConfetti()
-        else {
-          await playEngineMove();
-          setTimeout(autoPlay, 1000);
-        }
-      })()
-    }
+    board.start();
   }
 
   #handleReset = e => {
@@ -74,7 +50,8 @@ class FormChoice extends HTMLElement {
   }
 
   #handleMovePiece = () => {
-    this.querySelector("input[type=reset]").hidden = !game.history().length;
+    const board = document.querySelector("chess-board");
+    this.querySelector("input[type=reset]").hidden = !board.hasBegun();
   }
 
   connectedCallback() {
