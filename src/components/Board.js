@@ -108,7 +108,7 @@ class Board extends HTMLElement {
   async start() {
     await this.reset();
     if (this.#nbPlayers === 1) this.orientation(this.#color);
-    if (this.#color === "black" && this.#nbPlayers < 2) await this.engineMove();
+    if (this.#nbPlayers === 0 || (this.#color === "black" && this.#nbPlayers === 1)) await this.engineMove();
   }
 
   position(pos, useAnimation) {
