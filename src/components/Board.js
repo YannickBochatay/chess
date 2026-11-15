@@ -111,14 +111,18 @@ class Board extends HTMLElement {
     if (this.#nbPlayers === 0 || (this.#color === "black" && this.#nbPlayers === 1)) await this.engineMove();
   }
 
-  position(pos, useAnimation) {
-    return this.#board.position(pos, useAnimation);
+  undo() {
+    this.#game.undo();
+    this.#board.position(this.#game.fen(), true);
+    state.movesUci = state.movesUci.slice(0, -1);
+    this.#stockfish.setPosition(state.movesUci);
   }
 
   move(uci, useAnimation = true) {
     const move = this.#game.move(uci);
-    this.position(this.#game.fen(), useAnimation);
+    this.#board.position(this.#game.fen(), useAnimation);
     state.movesUci = state.movesUci.concat(move.lan);
+    this.#stockfish.setPosition(state.movesUci);
 
     if (this.isGameOver()) throwConfetti();
   }
@@ -131,7 +135,6 @@ class Board extends HTMLElement {
   }
 
   engineMove = async() => {
-    this.#stockfish.setPosition(state.movesUci);
     const bestUci = await this.#stockfish.go({ depth : 12 });
     try {
       this.move(bestUci);
