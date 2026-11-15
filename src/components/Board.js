@@ -30,6 +30,7 @@ class Board extends HTMLElement {
   #color = "white";
   #engineDelay = 1000;
   #delayId;
+  #from = null;
 
   constructor() {
     super();
@@ -104,21 +105,10 @@ class Board extends HTMLElement {
     state.movesUci = [];
   }
 
-  #autoPlay = async() => {
-    await this.engineMove();
-    if (!this.isGameOver()) {
-      this.#delayId = setTimeout(this.#autoPlay, this.#engineDelay);
-    }
-  }
-
   async start() {
     await this.reset();
-
-    if (this.#nbPlayers === 1) {
-      this.orientation(this.#color);
-      if (this.#color === "black") await this.engineMove();
-
-    } else if (state.nbPlayers === 0) void this.#autoPlay();
+    if (this.#nbPlayers === 1) this.orientation(this.#color);
+    if (this.#color === "black" && this.#nbPlayers < 2) await this.engineMove();
   }
 
   position(pos, useAnimation) {
@@ -135,7 +125,7 @@ class Board extends HTMLElement {
 
   humanMove({ from, to, promotion = "q" }, useAnimation = false) {
     this.move({ from, to, promotion }, useAnimation);
-    if (state.nbPlayers === 1) {
+    if (state.nbPlayers === 1 && !this.isGameOver()) {
       this.#delayId = setTimeout(this.engineMove, this.#engineDelay);
     }
   }
@@ -145,6 +135,9 @@ class Board extends HTMLElement {
     const bestUci = await this.#stockfish.go({ depth : 12 });
     try {
       this.move(bestUci);
+      if (state.nbPlayers === 0 && !this.isGameOver()) {
+      this.#delayId = setTimeout(this.engineMove, this.#engineDelay);
+    }
     } catch(e) {
       console.log("coup illégal de stockfish");
     }
@@ -173,30 +166,36 @@ class Board extends HTMLElement {
   }
 
   #handleDrop = (from, to) => {
-    this.#resetSquares();
     try {
       this.humanMove({ from, to });
+      this.#resetSquares();
     } catch(e) {
       console.log(e);
       return "snapback";
     }
   }
 
-  #handlePointerOver = (square, piece) => {
+  #handlePointerDown = (square, piece) => {
+    this.#resetSquares();
+
+    if (this.#from && !piece) { // on a déjà cliqué sur une pièce et on clique sur une case libre
+      this.humanMove({ from : this.#from, to : square }, true);
+      this.#from = null;
+      return;
+    }
+    
     const moves = this.#game.moves({
       square: square,
       verbose: true
     });
   
     if (moves.length === 0) return;
+
+    this.#from = square;
   
     this.#highlightSquare(square);
   
     for (const move of moves) this.#highlightSquare(move.to);
-  }
-
-  #handlePointerOut = (square, piece) => {
-    this.#resetSquares();
   }
 
   connectedCallback() {
@@ -204,9 +203,8 @@ class Board extends HTMLElement {
       draggable: true,
       position: 'start',
       onDrop: this.#handleDrop,
-      onMouseoverSquare: this.#handlePointerOver,
-      onMouseoutSquare: this.#handlePointerOut,
-      onDragStart: this.#handleDragStart
+      onDragStart: this.#handleDragStart,
+      onMouseDown : this.#handlePointerDown
     }
     
     this.#board = Chessboard("board", boardConfig);
