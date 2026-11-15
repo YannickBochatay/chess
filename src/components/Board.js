@@ -156,13 +156,13 @@ class Board extends HTMLElement {
     if (this.hasBegun()) e.preventDefault();
   }
 
+  #isOpposite(piece) {
+    return (this.turn() === 'w' && piece.search(/^b/) !== -1) ||
+        (this.turn() === 'b' && piece.search(/^w/) !== -1);
+  }
+
   #handleDragStart = (source, piece) => {
-    if (this.isGameOver()) return false;
-  
-    if ((this.turn() === 'w' && piece.search(/^b/) !== -1) ||
-        (this.turn() === 'b' && piece.search(/^w/) !== -1)) {
-      return false;
-    }
+    if (this.isGameOver() || this.#isOpposite(piece)) return false;
   }
 
   #handleDrop = (from, to) => {
@@ -178,7 +178,8 @@ class Board extends HTMLElement {
   #handlePointerDown = (square, piece) => {
     this.#resetSquares();
 
-    if (this.#from && !piece) { // on a déjà cliqué sur une pièce et on clique sur une case libre
+    // on a déjà cliqué sur une pièce et on clique sur une case libre ou une pièce adverse
+    if (this.#from && (!piece || this.#isOpposite(piece))) {
       this.humanMove({ from : this.#from, to : square }, true);
       this.#from = null;
       return;
