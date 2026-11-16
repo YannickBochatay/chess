@@ -3,6 +3,7 @@ import Chessboard from "chessboard";
 import { Stockfish } from "../stockfish.js";
 import { state } from "../state.js"
 import { throwConfetti } from "../utils/throwConfetti.js";
+import { playSound } from "../utils/playSound.js";
 
 const template = document.createElement("template");
 
@@ -133,8 +134,14 @@ class Board extends HTMLElement {
     state.movesUci = state.movesUci.slice(0, state.moveIndex + 1).concat(move.lan);
     state.moveIndex = state.movesUci.length - 1;
     this.#stockfish.setPosition(state.movesUci);
+    void playSound("move");
 
-    if (this.isGameOver()) throwConfetti();
+    if (this.isGameOver()) {
+      setTimeout(() => {
+        throwConfetti();
+        void playSound("victory");
+      },1000);
+    }
   }
 
   humanMove({ from, to, promotion = "q" }, useAnimation = false) {
