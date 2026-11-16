@@ -1,3 +1,5 @@
+import { state, onStateChange, offStateChange } from "../state.js"
+
 const template  = document.createElement("template");
 
 template.innerHTML = `
@@ -24,9 +26,22 @@ class UndoRedo extends HTMLElement {
     board.redo();
   }
 
+  #update = () => {
+    this.querySelector("#undo").disabled = (state.moveIndex < 0);
+    this.querySelector("#redo").disabled = (state.moveIndex === state.movesUci.length - 1);
+  }
+
   connectedCallback() {
     this.querySelector("#undo").addEventListener("click", this.#handleClickUndo);
     this.querySelector("#redo").addEventListener("click", this.#handleClickRedo);
+
+    onStateChange("movesUci", this.#update);
+    onStateChange("moveIndex", this.#update);
+  }
+
+  disconnectedCallback() {
+    offStateChange("movesUci", this.#update);
+    offStateChange("moveIndex", this.#update);
   }
 }
 
