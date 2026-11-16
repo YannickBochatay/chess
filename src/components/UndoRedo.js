@@ -20,7 +20,8 @@ class UndoRedo extends HTMLElement {
   }
 
   #handleClickRedo = () => {
-    console.log("will redo");
+    const board = document.querySelector("chess-board");
+    board.redo();
   }
 
   connectedCallback() {

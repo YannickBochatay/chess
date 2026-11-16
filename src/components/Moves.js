@@ -5,9 +5,14 @@ const template = document.createElement("template");
 template.innerHTML = `
   <style>
     #moves-history {
+      margin-bottom:0;
       p {
-        max-width:20ch;
+        max-width:23ch;
+        height:9rem;
         text-align:left;
+        border:1px solid var(--s-border);
+        padding:5px 10px;
+        overflow:auto;
       }
     } 
   </style>
@@ -25,15 +30,19 @@ class Moves extends HTMLElement {
   }
 
   #update = () => {
-    this.querySelector("p").innerText = state.movesUci.join(", ");
+    this.querySelector("p").innerHTML = state.movesUci.map((move, index) => (
+      state.moveIndex === index ? `<strong>${move}</strong>` : move
+    )).join(", ");
   }
 
   connectedCallback() {
     onStateChange("movesUci", this.#update);
+    onStateChange("moveIndex", this.#update);
   }
 
   disconnectedCallback() {
     offStateChange("movesUci", this.#update);
+    offStateChange("moveIndex", this.#update);
   }
 }
 

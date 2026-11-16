@@ -112,16 +112,26 @@ class Board extends HTMLElement {
   }
 
   undo() {
+    if (state.moveIndex < 0) return;
+    state.moveIndex--;
     this.#game.undo();
     this.#board.position(this.#game.fen(), true);
-    state.movesUci = state.movesUci.slice(0, -1);
-    this.#stockfish.setPosition(state.movesUci);
+    this.#stockfish.setPosition(state.movesUci.slice(0, state.moveIndex + 1));
+  }
+
+  redo() {
+    if (state.moveIndex === state.movesUci.length - 1) return;
+    state.moveIndex++;
+    this.#game.move(state.movesUci[state.moveIndex]);
+    this.#board.position(this.#game.fen(), true);
+    this.#stockfish.setPosition(state.movesUci.slice(0, state.moveIndex + 1));
   }
 
   move(uci, useAnimation = true) {
     const move = this.#game.move(uci);
     this.#board.position(this.#game.fen(), useAnimation);
-    state.movesUci = state.movesUci.concat(move.lan);
+    state.movesUci = state.movesUci.slice(0, state.moveIndex + 1).concat(move.lan);
+    state.moveIndex = state.movesUci.length - 1;
     this.#stockfish.setPosition(state.movesUci);
 
     if (this.isGameOver()) throwConfetti();
