@@ -135,18 +135,17 @@ class Board extends HTMLElement {
     state.moveIndex = state.movesUci.length - 1;
     this.#stockfish.setPosition(state.movesUci);
     void playSound("move");
+  }
+
+  humanMove({ from, to, promotion = "q" }, useAnimation = false) {
+    this.move({ from, to, promotion }, useAnimation);
 
     if (this.isGameOver()) {
       setTimeout(() => {
         throwConfetti();
         void playSound("victory");
-      },1000);
-    }
-  }
-
-  humanMove({ from, to, promotion = "q" }, useAnimation = false) {
-    this.move({ from, to, promotion }, useAnimation);
-    if (state.nbPlayers === 1 && !this.isGameOver()) {
+      },750);
+    } else if (state.nbPlayers === 1) {
       this.#delayId = setTimeout(this.engineMove, this.#engineDelay);
     }
   }
@@ -155,9 +154,10 @@ class Board extends HTMLElement {
     const bestUci = await this.#stockfish.go({ depth : 12 });
     try {
       this.move(bestUci);
-      if (state.nbPlayers === 0 && !this.isGameOver()) {
-      this.#delayId = setTimeout(this.engineMove, this.#engineDelay);
-    }
+      if (this.isGameOver()) void playSound("defeat");
+      else if (state.nbPlayers === 0) {
+        this.#delayId = setTimeout(this.engineMove, this.#engineDelay);
+      }
     } catch(e) {
       console.log("coup illégal de stockfish");
     }
