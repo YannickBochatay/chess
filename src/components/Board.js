@@ -110,6 +110,7 @@ class Board extends HTMLElement {
     await this.reset();
     if (this.#nbPlayers === 1) this.orientation(this.#color);
     if (this.#nbPlayers === 0 || (this.#color === "black" && this.#nbPlayers === 1)) await this.engineMove();
+    void playSound("start");
   }
 
   undo() {
