@@ -1,4 +1,4 @@
-import { Chess } from "chess.js";
+import { Chess, KING, WHITE, BLACK } from "chess.js";
 import Chessboard from "chessboard";
 import { Stockfish } from "../stockfish.js";
 import { state } from "../state.js"
@@ -7,15 +7,19 @@ import { playSound } from "../utils/playSound.js";
 
 const template = document.createElement("template");
 
-const highlightClass = "highlighted"
+const HIGHLIGHT_CLASS = "highlighted"
+const CHECK_CLASS = "check"
 
 template.innerHTML = `
   <style>
-    .${highlightClass} {
+    .${HIGHLIGHT_CLASS} {
       background-color:#a9a9a9;
       &.black-3c85d {
         background-color:#696969;
       }
+    }
+    .${CHECK_CLASS} {
+      box-shadow : inset 0 0 15px 3px #b40808;  
     }
   </style>
   <div id="board"></div>
@@ -131,11 +135,21 @@ class Board extends HTMLElement {
 
   move(uci, useAnimation = true) {
     const move = this.#game.move(uci);
+    this.#resetSquares(CHECK_CLASS);
     this.#board.position(this.#game.fen(), useAnimation);
     state.movesUci = state.movesUci.slice(0, state.moveIndex + 1).concat(move.lan);
     state.moveIndex = state.movesUci.length - 1;
     this.#stockfish.setPosition(state.movesUci);
     void playSound("move");
+
+    if (this.#game.inCheck()) {
+      const square = this.#game.findPiece({
+        type: KING,
+        color: this.turn()
+      });
+      this.#highlightSquare(square, CHECK_CLASS);
+      void playSound("check");
+    }
   }
 
   humanMove({ from, to, promotion = "q" }, useAnimation = false) {
@@ -164,13 +178,13 @@ class Board extends HTMLElement {
     }
   }
 
-  #resetSquares() {
-    const squares = this.querySelectorAll('.square-55d63.highlighted')
-    squares.forEach(elmt => elmt.classList.remove(highlightClass));
+  #resetSquares(className=HIGHLIGHT_CLASS) {
+    const squares = this.querySelectorAll(`.square-55d63.${className}`)
+    squares.forEach(elmt => elmt.classList.remove(className));
   }
 
-  #highlightSquare(square) {
-    this.querySelector('.square-' + square).classList.add(highlightClass);
+  #highlightSquare(square, className=HIGHLIGHT_CLASS) {
+    this.querySelector('.square-' + square).classList.add(className);
   }
 
   #handleBeforeUnload = e => {
@@ -178,8 +192,8 @@ class Board extends HTMLElement {
   }
 
   #isOpposite(piece) {
-    return (this.turn() === 'w' && piece.search(/^b/) !== -1) ||
-        (this.turn() === 'b' && piece.search(/^w/) !== -1);
+    return (this.turn() === WHITE && piece.startsWith(BLACK)) ||
+        (this.turn() === BLACK && piece.startsWith(WHITE));
   }
 
   #handleDragStart = (source, piece) => {
