@@ -133,6 +133,16 @@ class Board extends HTMLElement {
     this.#stockfish.setPosition(state.movesUci.slice(0, state.moveIndex + 1));
   }
 
+  async showTip() {
+    const bestUci = await this.#stockfish.go({ depth : 12 });
+    const from = bestUci.slice(0, 2);
+    const to = bestUci.slice(2);
+    this.#resetSquares();
+    this.#highlightSquare(from);
+    this.#highlightSquare(to);
+    void playSound("tip");
+  }
+
   move(uci, useAnimation = true) {
     const move = this.#game.move(uci);
     this.#resetSquares(CHECK_CLASS);
