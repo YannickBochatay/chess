@@ -17,11 +17,14 @@ class Tip extends HTMLElement {
   }
 
   #update = () => {
+    let content = "";
+
     if (state.tip) {
       const { score } = state.tip.bestMoves[state.tip.currentIndex];
-      const content = score.type === "cp" ? score.value : `mat en ${score.value}`;
-      this.querySelector("#eval").textContent = content;
+      content = score.type === "cp" ? score.value : `mat en ${score.value}`;
     }
+
+    this.querySelector("#eval").textContent = content;
   }
 
   #handleClick = () => {
