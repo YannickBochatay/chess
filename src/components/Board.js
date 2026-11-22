@@ -1,7 +1,7 @@
 import { Chess, KING, WHITE, BLACK } from "chess.js";
 import Chessboard from "chessboard";
 import { Stockfish } from "../stockfish.js";
-import { state } from "../state.js"
+import { state, resetState, onStateChange, offStateChange } from "../state.js"
 import { throwConfetti } from "../utils/throwConfetti.js";
 import { playSound } from "../utils/playSound.js";
 
@@ -30,10 +30,6 @@ class Board extends HTMLElement {
   #board;
   #game;
   #stockfish;
-  #elo = 1500;
-  #nbPlayers = 1;
-  #color = "white";
-  #engineDelay = 1000;
   #delayId;
   #from = null;
 
@@ -42,39 +38,7 @@ class Board extends HTMLElement {
     this.append(template.content.cloneNode(true));
     this.#game = new Chess();
     this.#stockfish = new Stockfish(new Worker('lib/stockfish/stockfish-19-lite-single.js'));
-  }
-
-  set elo(value) {
-    if (typeof value !== "number") throw new TypeError("ELO value must be a number");
-    if (value < 1320) throw new RangeError("ELO value must be greater or equal than 1320");
-    if (value > 3190) throw new RangeError("ELO value must be lower or equal than 3190");
-
-    this.#elo = value;
-  }
-
-  set nbPlayers(value) {
-    if (typeof value !== "number") throw new TypeError("nbPlayers value must be a number");
-    if (value < 0) throw new RangeError("nbPlayers value must be greater or equal than 0");
-    if (value > 2) throw new RangeError("nbPlayers value must be lower or equal than 2");
-
-    this.#nbPlayers = value;
-  }
-
-  set color(value) {
-    const values = ["white", "black", "random"];
-    if (!values.includes(value)) {
-      throw new Error(`${value} is not a correct value for color ("${values.join('", "')}" expected`);
-    }
-
-    if (value === "random") this.#color = Math.random() > 0.5 ? "black" : "white";
-    else this.#color = value;
-  }
-
-  set engineDelay(value) {
-    if (typeof value !== "number") throw new TypeError("engineDelay value must be a number");
-    if (value < 0) throw new RangeError("engineDelay value must be greater or equal than 0");
-
-    this.#engineDelay = value;
+    this.#stockfish.debug = false;
   }
 
   get board() {
@@ -104,16 +68,20 @@ class Board extends HTMLElement {
   async reset() {
     clearTimeout(this.#delayId);
     if (this.hasBegun()) this.#game.reset();
-    this.#stockfish.elo = this.#elo;
-    await this.#stockfish.init();
     this.#board.start();
-    state.movesUci = [];
+    resetState();
   }
 
   async start() {
     await this.reset();
-    if (this.#nbPlayers === 1) this.orientation(this.#color);
-    if (this.#nbPlayers === 0 || (this.#color === "black" && this.#nbPlayers === 1)) await this.engineMove();
+
+    let color;
+    if (state.color === "random") {
+      color = Math.random() > 0.5 ? "black" : "white";
+    } else color = state.color;
+
+    if (state.nbPlayers === 1) this.orientation(color);
+    if (state.nbPlayers === 0 || (color === "black" && state.nbPlayers === 1)) await this.engineMove();
     void playSound("start");
   }
 
@@ -134,12 +102,8 @@ class Board extends HTMLElement {
   }
 
   async showTip() {
-
     if (state.tip === null) {
-      await this.#stockfish.setOptions({ UCI_elo : 3190 });
       const bestMoves = await this.#stockfish.getBestMoves();
-      await this.#stockfish.setOptions({ UCI_elo : this.#elo });
-
       state.tip = {
         currentIndex : 0,
         bestMoves
@@ -159,6 +123,11 @@ class Board extends HTMLElement {
     this.#highlightSquare(from);
     this.#highlightSquare(to);
     void playSound("tip");
+  }
+
+  #checkMove(uci) {
+    this.#game.move(uci);
+    this.#game.undo();
   }
 
   move(uci, useAnimation = true) {
@@ -182,26 +151,32 @@ class Board extends HTMLElement {
     }
   }
 
-  humanMove({ from, to, promotion = "q" }, useAnimation = false) {
-    this.move({ from, to, promotion }, useAnimation);
+  async humanMove({ from, to, promotion = "q" }, useAnimation = false) {
+    const { value } = await this.#stockfish.evalMove(from + to);
+    state.lastMoveScore = value - state.score;
+    state.score = value;
 
+    this.move({ from, to, promotion }, useAnimation);
+    
     if (this.isGameOver()) {
       setTimeout(() => {
         throwConfetti();
         void playSound("victory");
       },750);
     } else if (state.nbPlayers === 1) {
-      this.#delayId = setTimeout(this.engineMove, this.#engineDelay);
+      this.#delayId = setTimeout(this.engineMove, state.engineDelay);
     }
   }
 
   engineMove = async() => {
-    const bestUci = await this.#stockfish.getBestMove();
+    const { move, score : { value } } = await this.#stockfish.getBestMove();
+    state.lastMoveScore = value - state.score;
+    state.score = value;
     try {
-      this.move(bestUci);
+      this.move(move);
       if (this.isGameOver()) void playSound("defeat");
       else if (state.nbPlayers === 0) {
-        this.#delayId = setTimeout(this.engineMove, this.#engineDelay);
+        this.#delayId = setTimeout(this.engineMove, state.engineDelay);
       }
     } catch(e) {
       console.log("coup illégal de stockfish");
@@ -227,26 +202,33 @@ class Board extends HTMLElement {
   }
 
   #handleDragStart = (source, piece) => {
-    if (this.isGameOver() || this.#isOpposite(piece)) return false;
+    if (this.isGameOver() || (piece && this.#isOpposite(piece))) return false;
   }
 
   #handleDrop = (from, to) => {
     try {
-      this.humanMove({ from, to });
+      this.#checkMove({ from, to });
+      void this.humanMove({ from, to });
       this.#resetSquares();
     } catch(e) {
-      console.log(e);
+      console.log("erreur", e);
       return "snapback";
     }
   }
 
-  #handlePointerDown = (square, piece) => {
+  #handlePointerDown = async(square, piece) => {
     this.#resetSquares();
 
     // on a déjà cliqué sur une pièce et on clique sur une case libre ou une pièce adverse
     if (this.#from && (!piece || this.#isOpposite(piece))) {
-      this.humanMove({ from : this.#from, to : square }, true);
-      this.#from = null;
+      try {
+        const move = { from : this.#from, to : square };
+        this.#checkMove(move);
+        void this.humanMove(move, true);
+        this.#from = null;
+      } catch(e) {
+        console.log(e);
+      }
       return;
     }
     
@@ -258,13 +240,15 @@ class Board extends HTMLElement {
     if (moves.length === 0) return;
 
     this.#from = square;
-  
     this.#highlightSquare(square);
-  
     for (const move of moves) this.#highlightSquare(move.to);
   }
 
-  connectedCallback() {
+  #handleChangeElo = value => {
+    return this.#stockfish.setOptions({ UCI_elo : value });
+  }
+
+  async connectedCallback() {
     const boardConfig = {
       draggable: true,
       position: 'start',
@@ -274,12 +258,15 @@ class Board extends HTMLElement {
     }
     
     this.#board = Chessboard("board", boardConfig);
-
     window.addEventListener("beforeunload",this.#handleBeforeUnload);
+    onStateChange("elo", this.#handleChangeElo);
+    await this.#handleChangeElo(state.elo);
+    await this.#stockfish.init();
   }
 
   disconnectedCallback() {
     window.removeEventListener("beforeunload",this.#handleBeforeUnload);
+    offStateChange("elo", this.#handleChangeElo);
   }
 
 }

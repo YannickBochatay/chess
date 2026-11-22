@@ -7,28 +7,33 @@ template.innerHTML = `
     label[for="elo"] {
       font-weight:bold;
     }
-    #range {
-      display:flex;
-      span {
-        margin:0 5px;
-      }
+    input[type=range]#elo {
+      margin-bottom:0;
     }
-    #value {
-      text-align: center;
+    datalist {
+      display:flex;
+      justify-content:space-between;
     }
   </style>
   <fieldset>
     <label for="elo">
       Niveau de l'ordinateur
     </label>
-    <div id="range">
-      <span>1320</span>
-      <input type="range" name="elo" min="1320" max="3190" step="10" id="elo" value="1500"/>
-      <span>3190</span>
-    </div>
-    <div id="value">
-      1500 ELO
-    </div>
+    <input
+      type="range"
+      name="elo"
+      min="1320"
+      max="3190"
+      step="10"
+      id="elo"
+      value="1500"
+      list="elo_values"
+    />
+    <datalist id="elo_values">
+      <option value="1320" label="1320"></option>
+      <option value="2255" label="2255"></option>
+      <option value="3190" label="3190"></option>
+    </datalist>
   </fieldset>
 `;
 
@@ -44,12 +49,11 @@ class LevelChoice extends HTMLElement {
 
   #update = () => {
     this.#input.value = state.elo;
-    this.querySelector("#value").textContent = state.elo + " ELO";
   }
 
   connectedCallback() {
     this.#update();
-    this.#input.addEventListener("input", e => state.elo = Number(e.target.value));
+    this.#input.addEventListener("change", e => state.elo = Number(e.target.value));
     onStateChange("elo", this.#update);
   }
 

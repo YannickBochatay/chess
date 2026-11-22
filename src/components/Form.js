@@ -30,13 +30,7 @@ class FormChoice extends HTMLElement {
 
   #handleSubmit(e) {
     e.preventDefault();
-
     const board = document.querySelector("chess-board");
-    
-    board.elo = state.elo;
-    board.nbPlayers = state.nbPlayers;
-    board.color = state.color;
-
     board.start();
   }
 

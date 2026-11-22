@@ -1,29 +1,20 @@
 export class Stockfish {
 
   #queue = [];
-  #elo = 1500;
   #depth = 12;
-  #multiPV = 5;
+  #debug = false;
 
   constructor(worker) {
     this.worker = worker;
     this.worker.onmessage = e => this.#dispatch(e.data);
   }
 
-  set elo(value) {
-    if (typeof value !== "number") throw new TypeError("ELO value must be a number");
-    if (value < 1320) throw new RangeError("ELO value must be greater or equal than 1320");
-    if (value > 3190) throw new RangeError("ELO value must be lower or equal than 3190");
-
-    this.#elo = value;
-  }
-
-  get elo() {
-    return this.#elo;
+  set debug(value) {
+    this.#debug = Boolean(value);
   }
 
   send(line) {
-    console.log("%cstdin", "color: blue", line);
+    if (this.#debug) console.log("%cstdin", "color: blue", line);
     this.worker.postMessage(line);
   }
 
@@ -36,7 +27,7 @@ export class Stockfish {
 
   /* Découpage et distribution des lignes reçues */
   #dispatch(line) {
-    console.log("%cstdout", "color: orange", line);
+    if (this.#debug) console.log("%cstdout", "color: orange", line);
     
     const trimmed = line.trim();
     // Recherche du premier listener dont le préfixe correspond
@@ -47,11 +38,6 @@ export class Stockfish {
         resolve(trimmed);
         break;
       }
-    }
-
-    if (trimmed.startsWith('info') && typeof this.onInfo === "function") {
-      const info = this.#parseInfo(trimmed);
-      this.onInfo(info);
     }
   }
 
@@ -70,9 +56,10 @@ export class Stockfish {
           const type = parts[++i];               // cp ou mate
           const val  = Number(parts[++i]);
           if (type === 'cp') {
+            console.log(val);
             info.score = {
               type:'cp',
-              value: (val / 100).toFixed(2)
+              value: val / 100
             };   // pions
           } else {
             info.score = {type:'mate', value: val};
@@ -100,31 +87,34 @@ export class Stockfish {
   async init() {
     this.send('uci');
     await this.waitFor('uciok');
-    await this.setOptions({ UCI_elo : this.#elo });
+    this.setPosition([]);
   }
 
   /** Positionne le moteur sur la partie courante */
   setPosition(movesUci) {
+    console.log("position", movesUci);
     const cmd = movesUci.length
         ? `position startpos moves ${movesUci.join(' ')}`
         : 'position startpos';
     this.send(cmd);
   }
 
-  async getBestMove() {
+  async evalMove(moveUci) {
     await this.setOptions({ MultiPV : 1 });
-    this.send(`go depth ${this.#depth}`);
-    const best = await this.waitFor('bestmove');
-    // « bestmove e2e4 ponder e7e5 »
-    return best.split(' ')[1];
+    this.send(`go depth ${this.#depth} searchmoves ${moveUci}`);
+    const line = await this.waitFor(`info depth ${this.#depth}`);
+    const info = this.#parseInfo(line);
+    console.log("human", moveUci, info.score.value);
+
+    return info.score;
   }
 
-  async getBestMoves() {
-    await this.setOptions({ MultiPV : this.#multiPV });
+  async getBestMoves(MultiPV = 5) {
+    await this.setOptions({ MultiPV });
     this.send(`go depth ${this.#depth}`);
     const moves = []
-    for (let i=1; i <= this.#multiPV; i++) {
-      const line = await this.waitFor(`info depth ${12}`);
+    for (let i=1; i <= MultiPV; i++) {
+      const line = await this.waitFor(`info depth ${this.#depth}`);
       const info = this.#parseInfo(line);
       moves.push({
         move : info.pv.split(/\s+/)[0],
@@ -133,6 +123,12 @@ export class Stockfish {
     }
 
     return moves;
+  }
+
+  async getBestMove() {
+    const moves = await this.getBestMoves(1);
+    console.log("bot", moves[0].move, moves[0].score.value);
+    return moves[0];
   }
 }
 
