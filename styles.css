@@ -49,3 +49,13 @@ body {
     width:calc(100vw - 20px);
   }
 }
+
+chess-moves {
+  display:none;
+}
+
+@media (min-width:870px) {
+  chess-moves {
+    display:block;
+  }
+}
