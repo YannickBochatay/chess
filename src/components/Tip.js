@@ -1,7 +1,12 @@
+import { state, onStateChange, offStateChange } from "../state.js"
+
 const template = document.createElement("template");
 
 template.innerHTML = `
+<div>
   <button class="outline">💡</button>
+  <span id="eval"></span>
+</div>
 `
 
 class Tip extends HTMLElement {
@@ -11,12 +16,26 @@ class Tip extends HTMLElement {
     this.append(template.content.cloneNode(true));
   }
 
+  #update = () => {
+    if (state.tip) {
+      const { score } = state.tip.bestMoves[state.tip.currentIndex];
+      const content = score.type === "cp" ? score.value : `mat en ${score.value}`;
+      this.querySelector("#eval").textContent = content;
+    }
+  }
+
   #handleClick = () => {
     document.querySelector("chess-board").showTip();
   }
 
   connectedCallback() {
     this.querySelector("button").addEventListener("click", this.#handleClick);
+
+    onStateChange("tip", this.#update);
+  }
+
+  disconnectedCallback() {
+    offStateChange("tip", this.#update);
   }
 }
 

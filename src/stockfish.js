@@ -2,6 +2,8 @@ export class Stockfish {
 
   #queue = [];
   #elo = 1500;
+  #depth = 12;
+  #multiPV = 5;
 
   constructor(worker) {
     this.worker = worker;
@@ -32,14 +34,6 @@ export class Stockfish {
     });
   }
 
-  #getEval(line) {
-    const m = line.match(/score (cp|mate) (-?\d+)/);
-    if (!m) return;
-    const type = m[1];
-    const val  = Number(m[2]);
-    return type === 'cp' ? (val / 100).toFixed(2) : `#${val}`;
-  }
-
   /* Découpage et distribution des lignes reçues */
   #dispatch(line) {
     console.log("%cstdout", "color: orange", line);
@@ -55,24 +49,58 @@ export class Stockfish {
       }
     }
 
-    if (!trimmed.startsWith('info')) return;
-    
-    if (this.onInfo) this.onInfo(trimmed);
-    if (this.onEval) this.onEval(this.#getEval(trimmed));
+    if (trimmed.startsWith('info') && typeof this.onInfo === "function") {
+      const info = this.#parseInfo(trimmed);
+      this.onInfo(info);
+    }
   }
 
-  /* === Séquence d’initialisation UCI === */
+  #parseInfo(line) {
+    const parts = line.split(' ');
+    const info = { raw : line };
+
+    for (let i = 0; i < parts.length; i++) {
+      switch (parts[i]) {
+        case 'depth':   info.depth   = Number(parts[++i]); break;
+        case 'seldepth':info.seldepth= Number(parts[++i]); break;
+        case 'time':    info.time    = Number(parts[++i]); break;
+        case 'nodes':   info.nodes   = Number(parts[++i]); break;
+        case 'nps':     info.nps     = Number(parts[++i]); break;
+        case 'score': {
+          const type = parts[++i];               // cp ou mate
+          const val  = Number(parts[++i]);
+          if (type === 'cp') {
+            info.score = {
+              type:'cp',
+              value: (val / 100).toFixed(2)
+            };   // pions
+          } else {
+            info.score = {type:'mate', value: val};
+          }
+          break;
+        }
+        case 'multipv':
+          info.multipv = Number(parts[++i]); break;
+        case 'pv':
+          info.pv = parts.slice(i+1).join(' ');
+          break;
+      }
+    }
+    return info;
+  }
+
+  async setOptions(obj) {
+    for (let key in obj) {
+      this.send(`setoption name ${key} value ${obj[key]}`);
+    }
+    this.send('isready');
+    await this.waitFor('readyok');
+  }
+
   async init() {
     this.send('uci');
     await this.waitFor('uciok');
-
-    // Exemple d’options (décommenter selon le besoin)
-    // this.send('setoption name Skill Level value 10');   // 0‑20, 0 = très faible
-    // this.send('setoption name UCI_LimitStrength value true');
-    this.send(`setoption name UCI_Elo value ${this.#elo}`);
-
-    this.send('isready');
-    await this.waitFor('readyok');
+    await this.setOptions({ UCI_elo : this.#elo });
   }
 
   /** Positionne le moteur sur la partie courante */
@@ -83,13 +111,28 @@ export class Stockfish {
     this.send(cmd);
   }
 
-  /** Demande un calcul (depth ou movetime) */
-  async go({depth, movetime} = {depth: 15}) {
-    const goCmd = movetime ? `go movetime ${movetime}` : `go depth ${depth}`;
-    this.send(goCmd);
+  async getBestMove() {
+    await this.setOptions({ MultiPV : 1 });
+    this.send(`go depth ${this.#depth}`);
     const best = await this.waitFor('bestmove');
     // « bestmove e2e4 ponder e7e5 »
     return best.split(' ')[1];
+  }
+
+  async getBestMoves() {
+    await this.setOptions({ MultiPV : this.#multiPV });
+    this.send(`go depth ${this.#depth}`);
+    const moves = []
+    for (let i=1; i <= this.#multiPV; i++) {
+      const line = await this.waitFor(`info depth ${12}`);
+      const info = this.#parseInfo(line);
+      moves.push({
+        move : info.pv.split(/\s+/)[0],
+        score : info.score
+      });
+    }
+
+    return moves;
   }
 }
 

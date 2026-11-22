@@ -5,5 +5,6 @@ export const { state, onStateChange, offStateChange } = createState({
   color : "white",
   elo : 1500,
   movesUci : [],
-  moveIndex : -1
+  moveIndex : -1,
+  tip : null
 })

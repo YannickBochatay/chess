@@ -134,9 +134,27 @@ class Board extends HTMLElement {
   }
 
   async showTip() {
-    const bestUci = await this.#stockfish.go({ depth : 12 });
-    const from = bestUci.slice(0, 2);
-    const to = bestUci.slice(2);
+
+    if (state.tip === null) {
+      await this.#stockfish.setOptions({ UCI_elo : 3190 });
+      const bestMoves = await this.#stockfish.getBestMoves();
+      await this.#stockfish.setOptions({ UCI_elo : this.#elo });
+
+      state.tip = {
+        currentIndex : 0,
+        bestMoves
+      }
+    } else {
+      state.tip = {
+        currentIndex : (state.tip.currentIndex + 1) % state.tip.bestMoves.length,
+        bestMoves : state.tip.bestMoves
+      }
+    }
+
+    const { move } = state.tip.bestMoves[state.tip.currentIndex];
+
+    const from = move.slice(0, 2);
+    const to = move.slice(2);
     this.#resetSquares();
     this.#highlightSquare(from);
     this.#highlightSquare(to);
@@ -151,6 +169,8 @@ class Board extends HTMLElement {
     state.moveIndex = state.movesUci.length - 1;
     this.#stockfish.setPosition(state.movesUci);
     void playSound("move");
+
+    state.tip = null; // on réinitialise le conseil
 
     if (this.#game.inCheck()) {
       const square = this.#game.findPiece({
@@ -176,7 +196,7 @@ class Board extends HTMLElement {
   }
 
   engineMove = async() => {
-    const bestUci = await this.#stockfish.go({ depth : 12 });
+    const bestUci = await this.#stockfish.getBestMove();
     try {
       this.move(bestUci);
       if (this.isGameOver()) void playSound("defeat");
