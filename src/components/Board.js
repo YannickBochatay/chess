@@ -38,7 +38,7 @@ class Board extends HTMLElement {
     this.append(template.content.cloneNode(true));
     this.#game = new Chess();
     this.#stockfish = new Stockfish(new Worker('lib/stockfish/stockfish-19-lite-single.js'));
-    this.#stockfish.debug = false;
+    this.#stockfish.debug = true;
   }
 
   get board() {
@@ -66,6 +66,7 @@ class Board extends HTMLElement {
   }
 
   async reset() {
+    this.#resetSquares(CHECK_CLASS);
     clearTimeout(this.#delayId);
     if (this.hasBegun()) this.#game.reset();
     this.#board.start();
@@ -151,10 +152,38 @@ class Board extends HTMLElement {
     }
   }
 
+  #setScore({ type, value }) {
+    if (this.turn() === BLACK) value *= -1;
+    if (type === "cp") {
+      state.lastMoveScore = (value - state.score).toFixed(2);
+      state.score = value;
+    } else {
+      state.score = "mat en " + value;
+    }
+  }
+
+  #setMoveLabel(score, bestScore) {
+    if (bestScore.type === "mate") {
+      if (score.type === "mate") {
+        return "meilleur coup";
+      } else {
+        return "gaffe (mat manqué)"
+      }
+    } else {
+      const delta = bestScore.value - score.value;
+      if (delta <= 0.1) return "meilleur coup";
+      else if (delta <= 0.3) return "bon";
+      else if (delta <= 0.5) return "imprécision";
+      else if (delta <= 1) return "erreur";
+      else return "gaffe";
+    }
+  }
+
   async humanMove({ from, to, promotion = "q" }, useAnimation = false) {
-    const { value } = await this.#stockfish.evalMove(from + to);
-    state.lastMoveScore = value - state.score;
-    state.score = value;
+    let score = await this.#stockfish.evalMove(from + to);
+    let { score : bestScore } = await this.#stockfish.getBestMove();
+    state.lastMoveLabel = this.#setMoveLabel(score, bestScore);
+    this.#setScore(score);
 
     this.move({ from, to, promotion }, useAnimation);
     
@@ -169,9 +198,10 @@ class Board extends HTMLElement {
   }
 
   engineMove = async() => {
-    const { move, score : { value } } = await this.#stockfish.getBestMove();
-    state.lastMoveScore = value - state.score;
-    state.score = value;
+    let { move, score } = await this.#stockfish.getBestMove();
+    state.lastMoveLabel = "";
+    this.#setScore(score);
+
     try {
       this.move(move);
       if (this.isGameOver()) void playSound("defeat");

@@ -7,9 +7,10 @@ const initialState = {
   engineDelay : 1000,
   movesUci : [],
   moveIndex : -1,
-  score : 0,
+  score : 0.3,
   tip : null,
-  evalMove : null
+  lastMoveScore : null,
+  lastMoveLabel : null
 }
 
 export const { state, onStateChange, offStateChange } = createState({ ...initialState });
@@ -41,7 +42,8 @@ onStateChange("color", value => {
 export function resetState() {
   state.movesUci = [];
   state.moveIndex = -1;
-  state.score = 0;
+  state.score = 0.3;
   state.tip = null;
-  state.evalMove = null;
+  state.lastMoveScore = null;
+  state.lastMoveLabel = null;
 }

@@ -56,7 +56,6 @@ export class Stockfish {
           const type = parts[++i];               // cp ou mate
           const val  = Number(parts[++i]);
           if (type === 'cp') {
-            console.log(val);
             info.score = {
               type:'cp',
               value: val / 100
@@ -92,7 +91,6 @@ export class Stockfish {
 
   /** Positionne le moteur sur la partie courante */
   setPosition(movesUci) {
-    console.log("position", movesUci);
     const cmd = movesUci.length
         ? `position startpos moves ${movesUci.join(' ')}`
         : 'position startpos';
@@ -104,7 +102,6 @@ export class Stockfish {
     this.send(`go depth ${this.#depth} searchmoves ${moveUci}`);
     const line = await this.waitFor(`info depth ${this.#depth}`);
     const info = this.#parseInfo(line);
-    console.log("human", moveUci, info.score.value);
 
     return info.score;
   }
@@ -127,7 +124,6 @@ export class Stockfish {
 
   async getBestMove() {
     const moves = await this.getBestMoves(1);
-    console.log("bot", moves[0].move, moves[0].score.value);
     return moves[0];
   }
 }
