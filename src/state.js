@@ -4,6 +4,8 @@ const initialState = {
   nbPlayers : 1,
   color : "white",
   elo : 1320,
+  skillLevel : 1,
+  levelType : "elo",
   engineDelay : 1000,
   movesUci : [],
   moveIndex : -1,

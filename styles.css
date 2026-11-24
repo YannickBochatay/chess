@@ -39,14 +39,26 @@ body {
 }
 
 @media (orientation: landscape) {
+  html {
+    --size:calc(100vh - 50px);
+  }
   #board {
-    width:calc(100vh - 50px);
+    width:var(--size);
+  }
+  #score {
+    height:var(--size);
   }
 }
 
 @media (orientation: portrait) {
+  html {
+    --size:calc(100vw - 20px);
+  }
   #board {
-    width:calc(100vw - 20px);
+    width:var(--size);
+  }
+  #score {
+    height:var(--size);
   }
 }
 

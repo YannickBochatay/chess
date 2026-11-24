@@ -86,20 +86,46 @@ class Board extends HTMLElement {
     void playSound("start");
   }
 
-  undo() {
-    if (state.moveIndex < 0) return;
-    state.moveIndex--;
-    this.#game.undo();
-    this.#board.position(this.#game.fen(), true);
-    this.#stockfish.setPosition(state.movesUci.slice(0, state.moveIndex + 1));
-  }
+  goToIndex = (newIndex, currentIndex, useAnimation=true) => {
 
-  redo() {
-    if (state.moveIndex === state.movesUci.length - 1) return;
-    state.moveIndex++;
-    this.#game.move(state.movesUci[state.moveIndex]);
-    this.#board.position(this.#game.fen(), true);
-    this.#stockfish.setPosition(state.movesUci.slice(0, state.moveIndex + 1));
+    this.#resetSquares(CHECK_CLASS);
+    this.#resetSquares(HIGHLIGHT_CLASS);
+
+    if (newIndex === currentIndex) return;
+
+    if (newIndex > currentIndex) {
+      const { length } = state.movesUci;
+      if (newIndex > length - 1) throw new RangeError(`index can't be greater than ${length - 1}`);
+      while (currentIndex < newIndex) {
+        const { move } = state.movesUci[++currentIndex];
+        this.#game.move(move);
+      }
+    } else {
+      if (newIndex < - 1) throw new RangeError(`index can't be lower than -1`);
+      while (currentIndex > newIndex) {
+        currentIndex--;
+        this.#game.undo();
+      }
+    }
+    
+    this.#board.position(this.#game.fen(), useAnimation);
+
+    const moves = state.movesUci
+      .slice(0, newIndex + 1)
+      .map(item => item.move);
+
+    this.#stockfish.setPosition(moves);
+
+    state.tip = null; // on réinitialise le conseil
+
+    if (this.#game.inCheck()) {
+      const square = this.#game.findPiece({
+        type: KING,
+        color: this.turn()
+      });
+      this.#highlightSquare(square, CHECK_CLASS);
+      void playSound("check");
+    }
   }
 
   async showTip() {
@@ -131,30 +157,18 @@ class Board extends HTMLElement {
     this.#game.undo();
   }
 
-  move(uci, useAnimation = true) {
-    const move = this.#game.move(uci);
-    this.#resetSquares(CHECK_CLASS);
-    this.#board.position(this.#game.fen(), useAnimation);
-    state.movesUci = state.movesUci.slice(0, state.moveIndex + 1).concat(move.lan);
-    state.moveIndex = state.movesUci.length - 1;
-    this.#stockfish.setPosition(state.movesUci);
-    void playSound("move");
-
-    state.tip = null; // on réinitialise le conseil
-
-    if (this.#game.inCheck()) {
-      const square = this.#game.findPiece({
-        type: KING,
-        color: this.turn()
+  move({ score, bestScore, human, move }) {
+    const isWhite = this.turn() === WHITE;
+    state.movesUci = state.movesUci
+      .slice(0, state.moveIndex + 1)
+      .concat({
+        move,
+        score : { ...score, value : isWhite ? score.value : -score.value },
+        bestScore : bestScore && { ...bestScore, value : isWhite ? bestScore.value : -bestScore.value },
+        human
       });
-      this.#highlightSquare(square, CHECK_CLASS);
-      void playSound("check");
-    }
-  }
 
-  #setScore({ type, value }) {
-    if (this.turn() === BLACK) value *= -1;
-    state.score = (type === "cp") ? value : "mat en " + value;
+    state.moveIndex = state.movesUci.length - 1;    
   }
 
   #setMoveLabel(score, bestScore) {
@@ -174,13 +188,11 @@ class Board extends HTMLElement {
     }
   }
 
-  async humanMove({ from, to, promotion = "q" }, useAnimation = false) {
-    let score = await this.#stockfish.evalMove(from + to);
+  async humanMove(move, useAnimation = false) {
+    let score = await this.#stockfish.evalMove(move);
     let { score : bestScore } = await this.#stockfish.getBestMove();
-    state.lastMoveLabel = this.#setMoveLabel(score, bestScore);
-    this.#setScore(score);
 
-    this.move({ from, to, promotion }, useAnimation);
+    this.move({ move, score, bestScore, human : true }, useAnimation);
     
     if (this.isGameOver()) {
       setTimeout(() => {
@@ -194,10 +206,9 @@ class Board extends HTMLElement {
 
   engineMove = async() => {
     let { move, score } = await this.#stockfish.getBestMove();
-    this.#setScore(score);
 
     try {
-      this.move(move);
+      this.move({ move, score, human : false });
       if (this.isGameOver()) void playSound("defeat");
       else if (state.nbPlayers === 0) {
         this.#delayId = setTimeout(this.engineMove, state.engineDelay);
@@ -231,8 +242,8 @@ class Board extends HTMLElement {
 
   #handleDrop = (from, to) => {
     try {
-      this.#checkMove({ from, to });
-      void this.humanMove({ from, to });
+      this.#checkMove(from+to);
+      void this.humanMove(from+to);
       this.#resetSquares();
     } catch(e) {
       console.log("erreur", e);
@@ -246,9 +257,8 @@ class Board extends HTMLElement {
     // on a déjà cliqué sur une pièce et on clique sur une case libre ou une pièce adverse
     if (this.#from && (!piece || this.#isOpposite(piece))) {
       try {
-        const move = { from : this.#from, to : square };
-        this.#checkMove(move);
-        void this.humanMove(move, true);
+        this.#checkMove(this.#from+square);
+        void this.humanMove(this.#from+square, true);
         this.#from = null;
       } catch(e) {
         console.log(e);
@@ -268,8 +278,18 @@ class Board extends HTMLElement {
     for (const move of moves) this.#highlightSquare(move.to);
   }
 
-  #handleChangeElo = value => {
-    return this.#stockfish.setOptions({ UCI_elo : value });
+  #handleChangeLevel = () => {
+    if (state.levelType === "elo") {
+      return this.#stockfish.setOptions({
+        UCI_elo : state.elo,
+        UCI_LimitStrength : "true"
+      });
+    } else {
+      return this.#stockfish.setOptions({
+        "skill level" : state.skillLevel,
+        UCI_LimitStrength : "false"
+      });
+    } 
   }
 
   async connectedCallback() {
@@ -282,15 +302,17 @@ class Board extends HTMLElement {
     }
     
     this.#board = Chessboard("board", boardConfig);
-    window.addEventListener("beforeunload",this.#handleBeforeUnload);
-    onStateChange("elo", this.#handleChangeElo);
-    await this.#handleChangeElo(state.elo);
+    // window.addEventListener("beforeunload",this.#handleBeforeUnload);
+    onStateChange(["elo", "skillLevel", "levelType"], this.#handleChangeLevel);
+    onStateChange("moveIndex", this.goToIndex);
+    await this.#handleChangeLevel();
     await this.#stockfish.init();
   }
 
   disconnectedCallback() {
     window.removeEventListener("beforeunload",this.#handleBeforeUnload);
-    offStateChange("elo", this.#handleChangeElo);
+    offStateChange(["elo", "skillLevel", "levelType"], this.#handleChangeLevel);
+    offStateChange("moveIndex", this.goToIndex);
   }
 
 }

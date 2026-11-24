@@ -16,19 +16,12 @@ class UndoRedo extends HTMLElement {
     this.append(template.content.cloneNode(true));
   }
 
-  #handleClickUndo = () => {
-    const board = document.querySelector("chess-board");
-    board.undo();
-  }
-
-  #handleClickRedo = () => {
-    const board = document.querySelector("chess-board");
-    board.redo();
-  }
+  #handleClickUndo = () => state.moveIndex--
+  #handleClickRedo = () => state.moveIndex++
 
   #update = () => {
     this.querySelector("#undo").disabled = (state.moveIndex < 0);
-    this.querySelector("#redo").disabled = (state.moveIndex === state.movesUci.length - 1);
+    this.querySelector("#redo").disabled = (state.moveIndex >= state.movesUci.length - 1);
   }
 
   connectedCallback() {
