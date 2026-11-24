@@ -1,7 +1,7 @@
 const template = document.createElement("template");
 
 template.innerHTML = `
-  <button class="outline">Retourner l'échiquier</button>
+  <button class="outline">↑↓ Retourner l'échiquier</button>
 `
 
 class FlipBoard extends HTMLElement {
