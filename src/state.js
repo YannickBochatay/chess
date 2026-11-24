@@ -3,13 +3,12 @@ import { createState } from "./utils/createState.js"
 const initialState = {
   nbPlayers : 1,
   color : "white",
-  elo : 1500,
+  elo : 1320,
   engineDelay : 1000,
   movesUci : [],
   moveIndex : -1,
   score : 0.3,
   tip : null,
-  lastMoveScore : null,
   lastMoveLabel : null
 }
 
@@ -44,6 +43,5 @@ export function resetState() {
   state.moveIndex = -1;
   state.score = 0.3;
   state.tip = null;
-  state.lastMoveScore = null;
   state.lastMoveLabel = null;
 }

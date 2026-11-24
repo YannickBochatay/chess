@@ -154,12 +154,7 @@ class Board extends HTMLElement {
 
   #setScore({ type, value }) {
     if (this.turn() === BLACK) value *= -1;
-    if (type === "cp") {
-      state.lastMoveScore = (value - state.score).toFixed(2);
-      state.score = value;
-    } else {
-      state.score = "mat en " + value;
-    }
+    state.score = (type === "cp") ? value : "mat en " + value;
   }
 
   #setMoveLabel(score, bestScore) {
@@ -199,7 +194,6 @@ class Board extends HTMLElement {
 
   engineMove = async() => {
     let { move, score } = await this.#stockfish.getBestMove();
-    state.lastMoveLabel = "";
     this.#setScore(score);
 
     try {

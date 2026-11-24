@@ -16,15 +16,15 @@ class EvalMove extends HTMLElement {
   }
 
   #update = () => {
-    this.querySelector("div").textContent = `${state.lastMoveLabel} (${state.lastMoveScore})`;
+    this.querySelector("div").textContent = state.lastMoveLabel ?? "";
   }
 
   connectedCallback() {
-    onStateChange("lastMoveScore", this.#update);
+    onStateChange("lastMoveLabel", this.#update);
   }
 
   disconnectedCallback() {
-    offStateChange("lastMoveScore", this.#update);
+    offStateChange("lastMoveLabel", this.#update);
   }
 }
 
