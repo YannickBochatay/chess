@@ -37,8 +37,6 @@ class Moves extends HTMLElement {
   }
 
   #setMoveLabel({ move, score, bestMove, bestScore }) {
-    console.log({ move, score, bestMove, bestScore })
-
     if (!bestScore) return "";
 
     if (bestScore.type === "mate") {
