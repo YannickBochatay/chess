@@ -12,6 +12,9 @@ template.innerHTML = `
         &.selected {
           font-weight:bold;
       }
+      tbody {
+        overflow:auto;
+      }
     } 
   </style>
   <section id="moves-history">
@@ -85,12 +88,10 @@ class Moves extends HTMLElement {
   }
 
   connectedCallback() {
-    onStateChange("movesUci", this.#update);
     onStateChange("moveIndex", this.#update);
   }
 
   disconnectedCallback() {
-    offStateChange("movesUci", this.#update);
     offStateChange("moveIndex", this.#update);
   }
 }

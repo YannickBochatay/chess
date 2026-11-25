@@ -90,6 +90,7 @@ class Board extends HTMLElement {
 
     this.#resetSquares(CHECK_CLASS);
     this.#resetSquares(HIGHLIGHT_CLASS);
+    state.tip = null; // on réinitialise le conseil
 
     if (newIndex === currentIndex) return;
 
@@ -115,8 +116,6 @@ class Board extends HTMLElement {
       .map(item => item.move);
 
     this.#stockfish.setPosition(moves);
-
-    state.tip = null; // on réinitialise le conseil
 
     if (this.#game.inCheck()) {
       const square = this.#game.findPiece({
