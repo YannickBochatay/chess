@@ -6,33 +6,26 @@ template.innerHTML = `
   <style>
     #moves-history {
       margin-bottom:0;
-      ul {
-        max-width:23ch;
-        height:9rem;
-        text-align:left;
-        border:1px solid var(--s-border);
-        padding:5px 10px;
-        overflow:auto;
-        list-style-type:none;
-
-        li {
-          display:inline-block;
-          margin:0 3px;
-
-          a {
-            text-decoration:none;
-            color:inherit;
-            &.selected {
-              font-weight:bold;
-            }
-          }
-        }
+      a {
+        text-decoration:none;
+        color:inherit;
+        &.selected {
+          font-weight:bold;
       }
     } 
   </style>
   <section id="moves-history">
-    <h5>Historique des coups</h5>
-    <ul></ul>
+    <table>
+      <thead>
+        <tr>
+          <th>Blancs</th>
+          <th>Pertinence</th>
+          <th>Noirs</th>
+          <th>Pertinence</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
   </section>
 `
 
@@ -43,20 +36,54 @@ class Moves extends HTMLElement {
     this.append(template.content.cloneNode(true));
   }
 
+  #setMoveLabel({ move, score, bestMove, bestScore }) {
+    console.log({ move, score, bestMove, bestScore })
+
+    if (!bestScore) return "";
+
+    if (bestScore.type === "mate") {
+      if (score.type === "mate") {
+        return "meilleur coup";
+      } else {
+        return "gaffe (mat manqué)"
+      }
+    } else if (move === bestMove) {
+      return "meilleur coup";
+    } else {
+      const delta = bestScore.value - score.value;
+      if (delta <= 0.1) return "très bon";
+      else if (delta <= 0.3) return "bon";
+      else if (delta <= 0.5) return "imprécision";
+      else if (delta <= 1) return "erreur";
+      else return "gaffe";
+    }
+  }
+
   #update = () => {
-    const ul = this.querySelector("ul");
-    const children = state.movesUci.map((move, index) => {
-      const li = document.createElement("li");
+    const tbody = this.querySelector("tbody");
+
+    while (tbody.children.length) tbody.children[0].remove();
+
+    let tr;
+    state.movesUci.forEach((move, index) => {
+      if (index % 2 === 0) {
+        tr = document.createElement("tr");
+        tbody.append(tr);
+      }
+
+      let td = document.createElement("td");
       const a = document.createElement("a");
       a.href = "#";
       a.addEventListener("click", () => state.moveIndex = index);
       a.textContent = move.move;
       if (index === state.moveIndex) a.classList.add("selected");
-      li.append(a);
+      td.append(a);
+      tr.append(td);
 
-      return li;
+      td = document.createElement("td");
+      td.textContent = this.#setMoveLabel(move);
+      tr.append(td);
     });
-    ul.replaceChildren(...children);
   }
 
   connectedCallback() {

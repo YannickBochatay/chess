@@ -11,11 +11,15 @@ export function createState(initialState) {
         return true;
       }
     }),
-    onStateChange(prop, callback) {
+    onStateChange : function onStateChange(prop, callback) {
+      if (Array.isArray(prop)) return prop.forEach(p => onStateChange(p, callback));
+
       if (!(prop in listeners)) listeners[prop] = [];
       if (!listeners[prop].includes(callback)) listeners[prop].push(callback);
     },
-    offStateChange(prop, callback) {
+    offStateChange : function offStateChange(prop, callback) {
+      if (Array.isArray(prop)) return prop.forEach(p => offStateChange(p, callback));
+
       const index = listeners[prop]?.indexOf(callback);
       if (index != null && index !== -1) listeners[prop].splice(index, 1);
     }

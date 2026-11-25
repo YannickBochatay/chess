@@ -4,8 +4,8 @@ const template  = document.createElement("template");
 
 template.innerHTML = `
   <div data-style="group">
-    <button id="undo" class="secondary outline">⟲</button>
-    <button id="redo" class="secondary outline">⟳</button>
+    <button id="undo" class="secondary outline">⟲ <span>Annuler</span></button>
+    <button id="redo" class="secondary outline">⟳ <span>Refaire</span></button>
   </div>
 `;
 

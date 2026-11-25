@@ -126,5 +126,14 @@ export class Stockfish {
     const moves = await this.getBestMoves(1);
     return moves[0];
   }
+
+  async getMove() {
+    await this.getBestMoves(1);
+
+    // best move n'est pas forcément le meilleur coup, cela dépend du niveau défini pour l'ordinateur
+    // https://official-stockfish.github.io/docs/stockfish-wiki/Stockfish-FAQ.html#how-do-skill-level-and-uci-elo-work
+    const line = await this.waitFor(`bestmove`);    
+    return line.split(/\s+/)[1];
+  }
 }
 

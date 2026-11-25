@@ -4,7 +4,7 @@ const template = document.createElement("template");
 
 template.innerHTML = `
 <div>
-  <button class="outline">💡</button>
+  <button class="secondary outline">💡 <span>Obtenir un conseil</span></button>
   <span id="eval"></span>
 </div>
 `

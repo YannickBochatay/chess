@@ -38,7 +38,7 @@ class Board extends HTMLElement {
     this.append(template.content.cloneNode(true));
     this.#game = new Chess();
     this.#stockfish = new Stockfish(new Worker('lib/stockfish/stockfish-19-lite-single.js'));
-    this.#stockfish.debug = true;
+    this.#stockfish.debug = false;
   }
 
   get board() {
@@ -157,42 +157,25 @@ class Board extends HTMLElement {
     this.#game.undo();
   }
 
-  move({ score, bestScore, human, move }) {
+  move({ move, score, bestMove, bestScore }) {
     const isWhite = this.turn() === WHITE;
     state.movesUci = state.movesUci
       .slice(0, state.moveIndex + 1)
       .concat({
         move,
         score : { ...score, value : isWhite ? score.value : -score.value },
-        bestScore : bestScore && { ...bestScore, value : isWhite ? bestScore.value : -bestScore.value },
-        human
+        bestMove,
+        bestScore : bestScore && { ...bestScore, value : isWhite ? bestScore.value : -bestScore.value }
       });
 
     state.moveIndex = state.movesUci.length - 1;    
   }
 
-  #setMoveLabel(score, bestScore) {
-    if (bestScore.type === "mate") {
-      if (score.type === "mate") {
-        return "meilleur coup";
-      } else {
-        return "gaffe (mat manqué)"
-      }
-    } else {
-      const delta = bestScore.value - score.value;
-      if (delta <= 0.1) return "meilleur coup";
-      else if (delta <= 0.3) return "bon";
-      else if (delta <= 0.5) return "imprécision";
-      else if (delta <= 1) return "erreur";
-      else return "gaffe";
-    }
-  }
-
   async humanMove(move, useAnimation = false) {
     let score = await this.#stockfish.evalMove(move);
-    let { score : bestScore } = await this.#stockfish.getBestMove();
+    let { move : bestMove, score : bestScore } = await this.#stockfish.getBestMove();
 
-    this.move({ move, score, bestScore, human : true }, useAnimation);
+    this.move({ move, score, bestMove, bestScore }, useAnimation);
     
     if (this.isGameOver()) {
       setTimeout(() => {
@@ -205,16 +188,18 @@ class Board extends HTMLElement {
   }
 
   engineMove = async() => {
-    let { move, score } = await this.#stockfish.getBestMove();
+    let move = await this.#stockfish.getMove();
+    let score = await this.#stockfish.evalMove(move);
+    let { move : bestMove, score : bestScore } = await this.#stockfish.getBestMove();
 
     try {
-      this.move({ move, score, human : false });
+      this.move({ move, score, bestMove, bestScore });
       if (this.isGameOver()) void playSound("defeat");
       else if (state.nbPlayers === 0) {
         this.#delayId = setTimeout(this.engineMove, state.engineDelay);
       }
     } catch(e) {
-      console.log("coup illégal de stockfish");
+      console.log(e);
     }
   }
 
